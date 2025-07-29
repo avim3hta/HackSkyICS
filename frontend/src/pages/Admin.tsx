@@ -9,6 +9,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { plantConfigs } from "@/data/plantConfigs";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Progress } from "@/components/ui/progress";
 
 interface Profile {
   is_admin: boolean;
@@ -29,6 +35,9 @@ const Admin = () => {
   const [password, setPassword] = useState("");
   const [systemControls, setSystemControls] = useState<SystemControl[]>([]);
   const [loading, setLoading] = useState(false);
+  const [toggleLoading, setToggleLoading] = useState<string | null>(null); // controlId being toggled
+  const [alert, setAlert] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [lastUpdate, setLastUpdate] = useState<string>("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -38,7 +47,6 @@ const Admin = () => {
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        
         if (session?.user) {
           setTimeout(() => {
             checkAdminStatus(session.user.id);
@@ -47,18 +55,15 @@ const Admin = () => {
         }
       }
     );
-
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      
       if (session?.user) {
         checkAdminStatus(session.user.id);
         fetchSystemControls();
       }
     });
-
     return () => subscription.unsubscribe();
   }, []);
 
@@ -69,11 +74,9 @@ const Admin = () => {
         .select('is_admin')
         .eq('user_id', userId)
         .single();
-
       if (error) throw error;
       setIsAdmin(data?.is_admin || false);
     } catch (error) {
-      console.error('Error checking admin status:', error);
       setIsAdmin(false);
     }
   };
@@ -84,41 +87,27 @@ const Admin = () => {
         .from('system_controls')
         .select('*')
         .order('plant_id, component_id');
-
       if (error) throw error;
       setSystemControls(data || []);
+      setLastUpdate(new Date().toLocaleString());
     } catch (error) {
-      console.error('Error fetching system controls:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch system controls",
-        variant: "destructive",
-      });
+      setAlert({ type: "error", message: "Failed to fetch system controls" });
     }
   };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
+    setAlert(null);
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-
       if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Signed in successfully",
-      });
+      setAlert({ type: "success", message: "Signed in successfully" });
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      setAlert({ type: "error", message: error.message });
     } finally {
       setLoading(false);
     }
@@ -128,22 +117,16 @@ const Admin = () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      
       navigate('/');
-      toast({
-        title: "Success",
-        description: "Signed out successfully",
-      });
+      toast({ title: "Success", description: "Signed out successfully" });
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      setAlert({ type: "error", message: error.message });
     }
   };
 
   const toggleSystemControl = async (controlId: string, newState: boolean) => {
+    setToggleLoading(controlId);
+    setAlert(null);
     try {
       const { error } = await supabase
         .from('system_controls')
@@ -152,9 +135,7 @@ const Admin = () => {
           updated_by: user?.id 
         })
         .eq('id', controlId);
-
       if (error) throw error;
-
       setSystemControls(prev => 
         prev.map(control => 
           control.id === controlId 
@@ -162,23 +143,39 @@ const Admin = () => {
             : control
         )
       );
-
-      toast({
-        title: "Success",
-        description: `System control ${newState ? 'enabled' : 'disabled'}`,
-      });
+      setAlert({ type: "success", message: `System control ${newState ? 'enabled' : 'disabled'}` });
+      setLastUpdate(new Date().toLocaleString());
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      setAlert({ type: "error", message: error.message });
+    } finally {
+      setToggleLoading(null);
     }
   };
 
-  const getPlantName = (plantId: string) => {
-    const plant = plantConfigs.find(p => p.id === plantId);
-    return plant?.name || plantId;
+  // --- UI Helper: Get summary stats ---
+  const getSummary = () => {
+    const total = systemControls.length;
+    const enabled = systemControls.filter(c => c.is_enabled).length;
+    const disabled = total - enabled;
+    return { total, enabled, disabled };
+  };
+
+  // --- UI Helper: Get badge color for status ---
+  const getStatusBadge = (enabled: boolean) =>
+    enabled ? <Badge variant="default">Enabled</Badge> : <Badge variant="destructive">Disabled</Badge>;
+
+  // --- UI Helper: Get badge for component type (pump, valve, etc.) ---
+  const getTypeBadge = (componentId: string) => {
+    if (componentId.toLowerCase().includes("pump")) return <Badge variant="secondary">Pump</Badge>;
+    if (componentId.toLowerCase().includes("valve")) return <Badge variant="secondary">Valve</Badge>;
+    if (componentId.toLowerCase().includes("reactor")) return <Badge variant="secondary">Reactor</Badge>;
+    if (componentId.toLowerCase().includes("coolant")) return <Badge variant="secondary">Coolant</Badge>;
+    if (componentId.toLowerCase().includes("gen")) return <Badge variant="secondary">Generator</Badge>;
+    if (componentId.toLowerCase().includes("trans")) return <Badge variant="secondary">Transformer</Badge>;
+    if (componentId.toLowerCase().includes("tank")) return <Badge variant="secondary">Tank</Badge>;
+    if (componentId.toLowerCase().includes("containment")) return <Badge variant="secondary">Containment</Badge>;
+    if (componentId.toLowerCase().includes("load")) return <Badge variant="secondary">Load</Badge>;
+    return <Badge variant="outline">Other</Badge>;
   };
 
   if (!user) {
@@ -192,6 +189,12 @@ const Admin = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {alert && (
+              <Alert variant={alert.type === "error" ? "destructive" : "default"} className="mb-4">
+                <AlertTitle>{alert.type === "error" ? "Error" : "Info"}</AlertTitle>
+                <AlertDescription>{alert.message}</AlertDescription>
+              </Alert>
+            )}
             <form onSubmit={handleSignIn} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -218,9 +221,7 @@ const Admin = () => {
               </Button>
             </form>
             <div className="mt-4 text-center">
-              <Button variant="ghost" onClick={() => navigate('/')}>
-                Back to Dashboard
-              </Button>
+              <Button variant="ghost" onClick={() => navigate('/')}>Back to Dashboard</Button>
             </div>
           </CardContent>
         </Card>
@@ -239,16 +240,10 @@ const Admin = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center space-y-4">
-            <p className="text-muted-foreground">
-              Contact your system administrator for access.
-            </p>
+            <p className="text-muted-foreground">Contact your system administrator for access.</p>
             <div className="space-y-2">
-              <Button onClick={handleSignOut} variant="outline" className="w-full">
-                Sign Out
-              </Button>
-              <Button variant="ghost" onClick={() => navigate('/')}>
-                Back to Dashboard
-              </Button>
+              <Button onClick={handleSignOut} variant="outline" className="w-full">Sign Out</Button>
+              <Button variant="ghost" onClick={() => navigate('/')}>Back to Dashboard</Button>
             </div>
           </CardContent>
         </Card>
@@ -256,80 +251,118 @@ const Admin = () => {
     );
   }
 
+  // --- MAIN ADMIN PANEL ---
+  const summary = getSummary();
   return (
     <div className="min-h-screen bg-background">
+      {/* Header Bar with Avatar and Status */}
       <header className="bg-card border-b border-border px-6 py-4 shadow-lg">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-primary flex items-center gap-3">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="flex items-center gap-3">
             <span className="text-3xl">🔧</span>
-            Admin Control Panel
-          </h1>
+            <h1 className="text-2xl font-bold text-primary">Admin Control Panel</h1>
+            <Badge variant="secondary" className="ml-2">ICS Cyber Defense</Badge>
+          </div>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground">
-              Welcome, {user.email}
-            </span>
-            <Button variant="outline" onClick={() => navigate('/')}>
-              Dashboard
-            </Button>
-            <Button variant="outline" onClick={handleSignOut}>
-              Sign Out
-            </Button>
+            <Avatar>
+              <AvatarFallback>{user.email?.[0]?.toUpperCase() || "A"}</AvatarFallback>
+            </Avatar>
+            <span className="text-sm text-muted-foreground hidden md:inline">{user.email}</span>
+            <Button variant="outline" onClick={() => navigate('/')}>Dashboard</Button>
+            <Button variant="outline" onClick={handleSignOut}>Sign Out</Button>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-6 max-w-6xl">
+      {/* Summary/Status Bar */}
+      <div className="bg-muted/40 border-b border-border px-6 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+        <div className="flex items-center gap-4">
+          <StatusSummary enabled={summary.enabled} disabled={summary.disabled} total={summary.total} />
+          <span className="text-xs text-muted-foreground">Last update: {lastUpdate}</span>
+        </div>
+      </div>
+
+      {/* Alert for errors/success */}
+      {alert && (
+        <div className="container max-w-2xl mx-auto mt-4">
+          <Alert variant={alert.type === "error" ? "destructive" : "default"}>
+            <AlertTitle>{alert.type === "error" ? "Error" : "Info"}</AlertTitle>
+            <AlertDescription>{alert.message}</AlertDescription>
+          </Alert>
+        </div>
+      )}
+
+      {/* Main Controls: Accordion per Plant */}
+      <main className="container mx-auto px-6 py-6 max-w-4xl">
         <div className="mb-6">
           <h2 className="text-xl font-semibold mb-2">System Component Controls</h2>
-          <p className="text-muted-foreground">
-            Enable or disable individual system components across all industrial plants.
-          </p>
+          <p className="text-muted-foreground">Enable or disable individual system components across all industrial plants.</p>
         </div>
-
-        <div className="grid gap-6">
+        <Accordion type="multiple" className="w-full space-y-4">
           {plantConfigs.map((plant) => {
             const plantControls = systemControls.filter(control => control.plant_id === plant.id);
-            
             return (
-              <Card key={plant.id}>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <span>{plant.icon}</span>
-                    {plant.name}
-                  </CardTitle>
-                  <CardDescription>
-                    Control individual components for this facility
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <AccordionItem value={plant.id} key={plant.id}>
+                <AccordionTrigger>
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">{plant.icon}</span>
+                    <span className="font-semibold text-lg">{plant.name}</span>
+                    <Badge variant="outline" className="ml-2">{plantControls.length} Components</Badge>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {plantControls.map((control) => (
-                      <div key={control.id} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div>
-                          <Label className="font-medium">
-                            {control.component_id.toUpperCase()}
-                          </Label>
-                          <p className="text-sm text-muted-foreground">
+                      <Card key={control.id} className="flex flex-col gap-2">
+                        <CardHeader className="flex flex-row items-center gap-3 pb-2">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <Label className="font-medium text-base">{control.component_id.toUpperCase()}</Label>
+                              {getTypeBadge(control.component_id)}
+                              {getStatusBadge(control.is_enabled)}
+                            </div>
+                          </div>
+                          {toggleLoading === control.id && <Progress value={100} className="w-16 h-2" />}
+                        </CardHeader>
+                        <CardContent className="flex items-center justify-between pt-0">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Switch
+                                checked={control.is_enabled}
+                                onCheckedChange={(checked) => toggleSystemControl(control.id, checked)}
+                                disabled={!!toggleLoading}
+                              />
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              {control.is_enabled ? "Turn OFF" : "Turn ON"} {control.component_id.toUpperCase()}
+                            </TooltipContent>
+                          </Tooltip>
+                          <span className="text-xs text-muted-foreground ml-2">
                             {control.is_enabled ? "Enabled" : "Disabled"}
-                          </p>
-                        </div>
-                        <Switch
-                          checked={control.is_enabled}
-                          onCheckedChange={(checked) => 
-                            toggleSystemControl(control.id, checked)
-                          }
-                        />
-                      </div>
+                          </span>
+                        </CardContent>
+                      </Card>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
+                </AccordionContent>
+              </AccordionItem>
             );
           })}
-        </div>
+        </Accordion>
       </main>
     </div>
   );
 };
+
+// --- StatusSummary component for summary bar ---
+function StatusSummary({ enabled, disabled, total }: { enabled: number; disabled: number; total: number }) {
+  return (
+    <div className="flex items-center gap-2">
+      <Badge variant="default">Enabled: {enabled}</Badge>
+      <Badge variant="destructive">Disabled: {disabled}</Badge>
+      <Badge variant="outline">Total: {total}</Badge>
+    </div>
+  );
+}
 
 export default Admin;
