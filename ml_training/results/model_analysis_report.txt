@@ -1,0 +1,98 @@
+================================================================================
+INDUSTRIAL ANOMALY DETECTION - MODEL ANALYSIS REPORT
+================================================================================
+Generated on: 2025-07-30 03:11:29
+
+DATASET SUMMARY
+----------------------------------------
+Total Samples: 950,000
+Features: 20
+Facilities: 3
+Devices: 11
+Sensors: 10
+Anomaly Rate: 5.00%
+Time Range: 2025-06-30 02:37:00.947900 to 2025-07-17 11:16:00.947900
+
+MODEL PERFORMANCE
+----------------------------------------
+
+ISOLATION_FOREST:
+  Accuracy:  0.9098
+  Precision: 0.0926
+  Recall:    0.0915
+  F1-Score:  0.0920
+  Confusion Matrix:
+    True Negatives:  171,984
+    False Positives: 8,516
+    False Negatives: 8,631
+    True Positives:  869
+
+AUTOENCODER:
+  Accuracy:  0.9242
+  Precision: 0.2423
+  Recall:    0.2423
+  F1-Score:  0.2423
+  Confusion Matrix:
+    True Negatives:  173,302
+    False Positives: 7,198
+    False Negatives: 7,198
+    True Positives:  2,302
+
+ENSEMBLE:
+  Accuracy:  0.9299
+  Precision: 0.1364
+  Recall:    0.0754
+  F1-Score:  0.0971
+  Confusion Matrix:
+    True Negatives:  175,966
+    False Positives: 4,534
+    False Negatives: 8,784
+    True Positives:  716
+
+BEST PERFORMING MODEL: AUTOENCODER
+F1-Score: 0.2423
+
+FACILITY ANALYSIS
+----------------------------------------
+
+Electrical Grid:
+  Total Samples: 250,000
+  Anomalies: 12,500
+  Anomaly Rate: 5.00%
+  Devices: 3
+
+Nuclear Plant:
+  Total Samples: 325,000
+  Anomalies: 16,250
+  Anomaly Rate: 5.00%
+  Devices: 4
+
+Water Treatment:
+  Total Samples: 375,000
+  Anomalies: 18,750
+  Anomaly Rate: 5.00%
+  Devices: 5
+
+RECOMMENDATIONS
+----------------------------------------
+WARNING: Model performance is below optimal threshold (F1 < 0.5)
+   Consider: More training data, feature engineering, hyperparameter tuning
+
+DEPLOYMENT READINESS
+----------------------------------------
+- Models trained and saved
+- Performance metrics calculated
+- Comprehensive analysis completed
+- Ready for backend integration
+
+OUTPUT FILES
+----------------------------------------
+- results/performance_comparison.png
+- results/confusion_matrices.png
+- results/data_distribution.png
+- results/facility_analysis.png
+- results/time_series_analysis.png
+- results/model_analysis_report.txt
+- results/model_metrics.json
+
+================================================================================
