@@ -79,13 +79,37 @@ app.use(express.urlencoded({ extended: true }));
 // Logging middleware
 app.use(loggerMiddleware);
 
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({
+    name: 'HackSkyICS Backend API',
+    version: '1.0.0',
+    status: 'running',
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      health: '/health',
+      scada: '/api/scada',
+      security: '/api/security',
+      ai: '/api/ai',
+      ml: '/api/ml'
+    },
+    websocket: `ws://${req.get('host')}`,
+    documentation: 'https://github.com/yourusername/HackSkyICS'
+  });
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    environment: process.env.NODE_ENV
+    environment: process.env.NODE_ENV,
+    services: {
+      simulation_engine: 'running',
+      data_streamer: 'active',
+      ml_models: 'loaded'
+    }
   });
 });
 
