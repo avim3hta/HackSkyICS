@@ -30,6 +30,7 @@ const io = socketIo(server, {
     origin: [
       "http://localhost:3000",
       "http://localhost:8080",
+      "https://sudowinics.netlify.app",
       "https://*.netlify.app",
       process.env.CORS_ORIGIN
     ].filter(Boolean),
@@ -54,6 +55,7 @@ app.use(cors({
   origin: [
     "http://localhost:3000",
     "http://localhost:8080",
+    "https://sudowinics.netlify.app",
     "https://*.netlify.app",
     process.env.CORS_ORIGIN
   ].filter(Boolean),
