@@ -54,20 +54,12 @@ const Index = () => {
           <SecurityMonitoring />
         </div>
 
-        {/* Bottom Section: Scenario Panels */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Bottom Section: Defense Responses */}
+        <div className="grid grid-cols-1 gap-6">
           <ScenarioPanel
-            title="Attack Scenarios"
-            icon="⚔️"
-            items={selectedPlant.attackScenarios}
-            type="attack"
-          />
-          
-          <ScenarioPanel
-            title="Autonomous Responses"
+            title="Autonomous Defense Responses"
             icon="🛡️"
             items={selectedPlant.defenseResponses}
-            type="defense"
           />
         </div>
       </main>

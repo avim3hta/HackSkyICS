@@ -16,11 +16,6 @@ export interface PlantConfig {
   icon: string;
   image: string;
   processItems: ProcessItem[];
-  attackScenarios: Array<{
-    id: string;
-    label: string;
-    icon: string;
-  }>;
   defenseResponses: Array<{
     id: string;
     label: string;
@@ -45,11 +40,6 @@ export const plantConfigs: PlantConfig[] = [
       { id: "filtration", label: "FILTRATION", status: "ACTIVE", type: "normal" },
       { id: "monitoring", label: "MONITORING", status: "ONLINE", type: "normal" },
     ],
-    attackScenarios: [
-      { id: "dos", label: "Launch DoS Attack", icon: "⚔️" },
-      { id: "control", label: "Unauthorized Control", icon: "⚔️" },
-      { id: "manipulation", label: "Data Manipulation", icon: "⚔️" },
-    ],
     defenseResponses: [
       { id: "isolation", label: "Auto-Isolation", icon: "🛡️" },
       { id: "filtering", label: "Traffic Filtering", icon: "🛡️" },
@@ -70,11 +60,6 @@ export const plantConfigs: PlantConfig[] = [
       { id: "coolantA", label: "COOLANT-A", status: "285°C", type: "normal" },
       { id: "coolantB", label: "COOLANT-B", status: "290°C", type: "normal" },
       { id: "containment", label: "CONTAINMENT", status: "SEALED", type: "normal" },
-    ],
-    attackScenarios: [
-      { id: "scram", label: "Forced SCRAM Attack", icon: "⚔️" },
-      { id: "coolant", label: "Coolant System Breach", icon: "⚔️" },
-      { id: "control", label: "Control Rod Override", icon: "⚔️" },
     ],
     defenseResponses: [
       { id: "scram", label: "Emergency SCRAM", icon: "🛡️" },
@@ -97,11 +82,6 @@ export const plantConfigs: PlantConfig[] = [
       { id: "substation2", label: "SUBSTATION-2", status: "ACTIVE", type: "normal" },
       { id: "protection_system", label: "PROTECTION", status: "ARMED", type: "normal" },
       { id: "load", label: "GRID LOAD", status: "85% CAP", type: "normal" },
-    ],
-    attackScenarios: [
-      { id: "blackout", label: "Coordinated Blackout", icon: "⚔️" },
-      { id: "overload", label: "System Overload", icon: "⚔️" },
-      { id: "frequency", label: "Frequency Attack", icon: "⚔️" },
     ],
     defenseResponses: [
       { id: "shedding", label: "Load Shedding", icon: "🛡️" },
