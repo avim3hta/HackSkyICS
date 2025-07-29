@@ -604,9 +604,9 @@ const Admin = () => {
                   </div>
 
                   {/* Component Controls */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {plantControls.map((control) => {
-                      const componentLabel = control.component_id.toUpperCase().replace(/([A-Z])/g, ' $1').trim();
+                      const componentLabel = control.component_id.toUpperCase().replace(/([A-Z])/g, ' $1').trim().replace('_', ' ');
                       const isReactor = control.component_id.toLowerCase().includes('reactor');
                       const isTurbine = control.component_id.toLowerCase().includes('gen');
                       const isCritical = isReactor || control.component_id.toLowerCase().includes('containment');
@@ -614,7 +614,7 @@ const Admin = () => {
                       return (
                         <div 
                           key={control.id} 
-                          className={`flex items-center justify-between p-6 border-2 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${
+                          className={`flex items-center justify-between p-4 border-2 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${
                             isCritical 
                               ? 'border-red-300 bg-gradient-to-br from-red-50 to-red-100 dark:border-red-600 dark:bg-gradient-to-br dark:from-red-900/20 dark:to-red-800/20' : 
                             isTurbine 
@@ -623,32 +623,44 @@ const Admin = () => {
                           }`}
                         >
                           <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <span className="text-2xl">
-                                {isReactor ? "⚛️" : isTurbine ? "⚡" : "⚙️"}
-                              </span>
-                              <Label className="font-bold text-slate-800 dark:text-slate-100 text-base">
-                                {componentLabel}
-                              </Label>
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center justify-center w-10 h-10 bg-white dark:bg-slate-700 rounded-lg shadow-md">
+                                <span className="text-xl">
+                                  {isReactor ? "⚛️" : isTurbine ? "⚡" : "⚙️"}
+                                </span>
+                              </div>
+                              <div className="flex flex-col">
+                                <Label className="font-bold text-slate-800 dark:text-slate-100 text-base tracking-wide">
+                                  {componentLabel}
+                                </Label>
+                              </div>
                               {isCritical && (
-                                <Badge className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-200 dark:border-red-700 text-xs font-bold">
+                                <Badge className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-200 dark:border-red-700 text-xs font-bold px-2 py-1 rounded-full">
                                   CRITICAL
                                 </Badge>
                               )}
                             </div>
-
                           </div>
-                          <Switch
-                            checked={control.is_enabled}
-                            onCheckedChange={(checked) => 
-                              toggleSystemControl(control.id, checked)
-                            }
-                            className={`scale-125 ${
+                          <div className="flex flex-col items-end gap-1">
+                            <Switch
+                              checked={control.is_enabled}
+                              onCheckedChange={(checked) => 
+                                toggleSystemControl(control.id, checked)
+                              }
+                              className={`scale-125 ${
+                                control.is_enabled 
+                                  ? 'data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500' 
+                                  : 'data-[state=unchecked]:bg-red-500 data-[state=unchecked]:border-red-500'
+                              }`}
+                            />
+                            <div className={`text-xs font-semibold px-2 py-1 rounded-full ${
                               control.is_enabled 
-                                ? 'data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500' 
-                                : 'data-[state=unchecked]:bg-red-500 data-[state=unchecked]:border-red-500'
-                            }`}
-                          />
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' 
+                                : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                            }`}>
+                              {control.is_enabled ? 'ONLINE' : 'OFFLINE'}
+                            </div>
+                          </div>
                         </div>
                       );
                     })}
@@ -705,6 +717,83 @@ const Admin = () => {
                   </div>
                 );
               })}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Security Events Monitoring */}
+        <Card className="mt-8 border-2 border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm shadow-xl">
+          <CardHeader className="bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 rounded-t-lg">
+            <CardTitle className="text-slate-800 dark:text-slate-100 text-xl font-bold flex items-center gap-3">
+              <span className="text-2xl">🔒</span>
+              Security Events Monitoring
+            </CardTitle>
+            <CardDescription className="text-slate-600 dark:text-slate-300">
+              Real-time security threat detection and analysis
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Security Events Chart */}
+              <div className="h-64 bg-white dark:bg-slate-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                <div className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-3 border-b border-gray-200 dark:border-gray-600 pb-2">
+                  Security Events Distribution
+                </div>
+                <div className="h-48 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20 rounded-lg p-2">
+                  <div className="h-full flex items-center justify-center text-gray-500 dark:text-gray-400">
+                    <div className="text-center">
+                      <div className="text-4xl mb-2">📊</div>
+                      <div className="text-sm font-semibold">Security Events Chart</div>
+                      <div className="text-xs">Real-time threat analysis</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Security Alerts */}
+              <div className="h-64 bg-white dark:bg-slate-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                <div className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-3 border-b border-gray-200 dark:border-gray-600 pb-2">
+                  Recent Security Alerts
+                </div>
+                <div className="h-48 overflow-y-auto space-y-2">
+                  <div className="p-3 bg-red-50 border-l-4 border-red-500 text-red-800 dark:bg-red-950/20 dark:border-red-400 dark:text-red-300 rounded-lg">
+                    <div className="font-semibold text-sm">Unauthorized Access Attempt</div>
+                    <div className="text-xs">Source: 192.168.1.100 | Time: 14:32:15</div>
+                  </div>
+                  <div className="p-3 bg-yellow-50 border-l-4 border-yellow-500 text-yellow-800 dark:bg-yellow-950/20 dark:border-yellow-400 dark:text-yellow-300 rounded-lg">
+                    <div className="font-semibold text-sm">Suspicious Login Pattern</div>
+                    <div className="text-xs">User: admin@unknown | Time: 14:28:42</div>
+                  </div>
+                  <div className="p-3 bg-green-50 border-l-4 border-green-500 text-green-800 dark:bg-green-950/20 dark:border-green-400 dark:text-green-300 rounded-lg">
+                    <div className="font-semibold text-sm">Threat Blocked Successfully</div>
+                    <div className="text-xs">Malware signature detected | Time: 14:25:18</div>
+                  </div>
+                  <div className="p-3 bg-blue-50 border-l-4 border-blue-500 text-blue-800 dark:bg-blue-950/20 dark:border-blue-400 dark:text-blue-300 rounded-lg">
+                    <div className="font-semibold text-sm">System Scan Complete</div>
+                    <div className="text-xs">No vulnerabilities found | Time: 14:20:33</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Security Metrics */}
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <div className="text-2xl font-bold text-red-600 dark:text-red-400">3</div>
+                <div className="text-sm text-red-700 dark:text-red-300">Active Threats</div>
+              </div>
+              <div className="p-4 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">12</div>
+                <div className="text-sm text-yellow-700 dark:text-yellow-300">Suspicious Events</div>
+              </div>
+              <div className="p-4 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">
+                <div className="text-2xl font-bold text-green-600 dark:text-green-400">47</div>
+                <div className="text-sm text-green-700 dark:text-green-300">Threats Blocked</div>
+              </div>
+              <div className="p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">99.8%</div>
+                <div className="text-sm text-blue-700 dark:text-blue-300">Protection Rate</div>
+              </div>
             </div>
           </CardContent>
         </Card>

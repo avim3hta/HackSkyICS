@@ -51,7 +51,7 @@ const Index = () => {
           <ProcessStatus plantConfig={selectedPlant} />
           
           {/* Right Column: Security Monitoring */}
-          <SecurityMonitoring />
+          <SecurityMonitoring selectedPlantId={selectedPlantId} />
         </div>
 
         {/* Bottom Section: Defense Responses */}
@@ -64,19 +64,7 @@ const Index = () => {
         </div>
       </main>
 
-      {/* Footer with System Info */}
-      <footer className="bg-card border-t border-border px-6 py-3 mt-8">
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <div className="flex items-center gap-4">
-            <span>🖥️ Resolution: 1920x1080</span>
-            <span>⚡ Real-Time Monitoring Active</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 bg-success rounded-full animate-pulse"></span>
-            <span>Live Demo Mode</span>
-          </div>
-        </div>
-      </footer>
+
     </div>
   );
 };
