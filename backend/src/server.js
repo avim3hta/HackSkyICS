@@ -13,25 +13,35 @@ dotenv.config();
 const { router: scadaRoutes, initializeEngine: initScadaEngine } = require('./routes/scada');
 const { router: securityRoutes, initializeEngine: initSecurityEngine } = require('./routes/security');
 const aiRoutes = require('./routes/ai');
+const { router: mlRoutes, anomalyService } = require('./routes/ml');
 
 // Import middleware
-const { logger } = require('./middleware/logger');
+const { loggerMiddleware } = require('./middleware/logger');
 const { errorHandler } = require('./middleware/errorHandler');
 
 // Import simulation engine
 const { SimulationEngine } = require('./simulation/engine');
+const { IndustrialDataStreamer } = require('./services/dataStreamer');
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:8080",
+      process.env.CORS_ORIGIN
+    ].filter(Boolean),
     methods: ["GET", "POST"]
   }
 });
 
 // Initialize simulation engine
 const simulationEngine = new SimulationEngine(io);
+
+// Initialize data streamer for ML integration
+const dataStreamer = new IndustrialDataStreamer(io);
+app.locals.dataStreamer = dataStreamer;
 
 // Initialize route engines
 initScadaEngine(simulationEngine);
@@ -40,7 +50,11 @@ initSecurityEngine(simulationEngine);
 // Security middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+  origin: [
+    "http://localhost:3000",
+    "http://localhost:8080",
+    process.env.CORS_ORIGIN
+  ].filter(Boolean),
   credentials: true
 }));
 
@@ -57,7 +71,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // Logging middleware
-app.use(logger);
+app.use(loggerMiddleware);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -73,6 +87,7 @@ app.get('/health', (req, res) => {
 app.use('/api/scada', scadaRoutes);
 app.use('/api/security', securityRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/ml', mlRoutes);
 
 // WebSocket connection handling
 io.on('connection', (socket) => {
@@ -85,6 +100,14 @@ io.on('connection', (socket) => {
   
   socket.on('join-security', () => {
     socket.join('security-alerts');
+  });
+  
+  socket.on('join-ml-stream', () => {
+    socket.join('ml-stream');
+  });
+  
+  socket.on('join-anomaly-alerts', () => {
+    socket.join('anomaly-alerts');
   });
   
   socket.on('disconnect', () => {
@@ -107,7 +130,7 @@ app.use('*', (req, res) => {
 // Start simulation engine
 simulationEngine.start();
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, () => {
   console.log(`🚀 ICS Static Backend running on port ${PORT}`);
