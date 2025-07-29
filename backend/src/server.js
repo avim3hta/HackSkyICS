@@ -30,6 +30,7 @@ const io = socketIo(server, {
     origin: [
       "http://localhost:3000",
       "http://localhost:8080",
+      "https://*.netlify.app",
       process.env.CORS_ORIGIN
     ].filter(Boolean),
     methods: ["GET", "POST"]
@@ -53,6 +54,7 @@ app.use(cors({
   origin: [
     "http://localhost:3000",
     "http://localhost:8080",
+    "https://*.netlify.app",
     process.env.CORS_ORIGIN
   ].filter(Boolean),
   credentials: true

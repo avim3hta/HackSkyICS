@@ -8,6 +8,9 @@ import { AlertTriangle, Activity, Zap, Shield, Play, Pause, Settings } from 'luc
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import io from 'socket.io-client';
 
+// Backend URL configuration
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+
 interface SensorData {
   timestamp: string;
   facility_type: string;
@@ -79,7 +82,7 @@ const AnomalyDetection: React.FC = () => {
 
   useEffect(() => {
     // Initialize socket connection
-    socketRef.current = io('http://localhost:5000');
+    socketRef.current = io(BACKEND_URL);
     
     socketRef.current.on('connect', () => {
       setIsConnected(true);
@@ -143,7 +146,7 @@ const AnomalyDetection: React.FC = () => {
 
   const fetchModelStats = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/ml/stats');
+      const response = await fetch(`${BACKEND_URL}/api/ml/stats`);
       const data = await response.json();
       if (data.success) {
         setModelStats(data.model_stats);
@@ -155,7 +158,7 @@ const AnomalyDetection: React.FC = () => {
 
   const fetchStreamingStatus = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/ml/stream/status');
+      const response = await fetch(`${BACKEND_URL}/api/ml/stream/status`);
       const data = await response.json();
       if (data.success) {
         setStreamingStats(data.streaming_status);
@@ -168,7 +171,7 @@ const AnomalyDetection: React.FC = () => {
 
   const startStreaming = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/ml/stream/start', {
+      const response = await fetch(`${BACKEND_URL}/api/ml/stream/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -184,7 +187,7 @@ const AnomalyDetection: React.FC = () => {
 
   const stopStreaming = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/ml/stream/stop', {
+      const response = await fetch(`${BACKEND_URL}/api/ml/stream/stop`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -200,7 +203,7 @@ const AnomalyDetection: React.FC = () => {
 
   const toggleAnomalyDetection = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/ml/stream/config', {
+      const response = await fetch(`${BACKEND_URL}/api/ml/stream/config`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ anomaly_detection_enabled: !anomalyDetectionEnabled })
