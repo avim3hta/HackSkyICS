@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      attack_scenarios: {
+        Row: {
+          created_at: string
+          executed_at: string | null
+          executed_by: string | null
+          id: string
+          is_active: boolean | null
+          plant_id: string
+          scenario_id: string
+          scenario_name: string
+        }
+        Insert: {
+          created_at?: string
+          executed_at?: string | null
+          executed_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          plant_id: string
+          scenario_id: string
+          scenario_name: string
+        }
+        Update: {
+          created_at?: string
+          executed_at?: string | null
+          executed_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          plant_id?: string
+          scenario_id?: string
+          scenario_name?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

@@ -32,15 +32,18 @@ export const plantConfigs: PlantConfig[] = [
   {
     id: "water",
     name: "Water Treatment Plant",
-    title: "🏭 WATER TREATMENT PLANT - LIVE OPERATIONS",
+    title: "WATER TREATMENT PLANT - LIVE OPERATIONS",
     icon: "🏭",
     image: processDiagram,
     processItems: [
       { id: "pump1", label: "PUMP-1", status: "ON", type: "normal" },
       { id: "pump2", label: "PUMP-2", status: "ON", type: "normal" },
+      { id: "backup_pump", label: "BACKUP-PUMP", status: "STANDBY", type: "normal" },
       { id: "valveA", label: "VALVE-A", status: "50%", type: "normal" },
       { id: "valveB", label: "VALVE-B", status: "75%", type: "normal" },
       { id: "tank", label: "TANK LEVEL", status: "75% FULL", type: "normal" },
+      { id: "filtration", label: "FILTRATION", status: "ACTIVE", type: "normal" },
+      { id: "monitoring", label: "MONITORING", status: "ONLINE", type: "normal" },
     ],
     attackScenarios: [
       { id: "dos", label: "Launch DoS Attack", icon: "⚔️" },
@@ -56,12 +59,14 @@ export const plantConfigs: PlantConfig[] = [
   {
     id: "nuclear",
     name: "Nuclear Power Plant",
-    title: "☢️ NUCLEAR POWER PLANT - LIVE OPERATIONS",
+    title: "NUCLEAR POWER PLANT - LIVE OPERATIONS",
     icon: "☢️",
     image: nuclearDiagram,
     processItems: [
       { id: "reactor1", label: "REACTOR-1", status: "ACTIVE", type: "normal" },
       { id: "reactor2", label: "REACTOR-2", status: "ACTIVE", type: "normal" },
+      { id: "turbine1", label: "TURBINE-1", status: "GENERATING", type: "normal" },
+      { id: "turbine2", label: "TURBINE-2", status: "GENERATING", type: "normal" },
       { id: "coolantA", label: "COOLANT-A", status: "285°C", type: "normal" },
       { id: "coolantB", label: "COOLANT-B", status: "290°C", type: "normal" },
       { id: "containment", label: "CONTAINMENT", status: "SEALED", type: "normal" },
@@ -80,7 +85,7 @@ export const plantConfigs: PlantConfig[] = [
   {
     id: "grid",
     name: "Electrical Grid",
-    title: "⚡ ELECTRICAL GRID - LIVE OPERATIONS",
+    title: "ELECTRICAL GRID - LIVE OPERATIONS",
     icon: "⚡",
     image: gridDiagram,
     processItems: [
@@ -88,6 +93,9 @@ export const plantConfigs: PlantConfig[] = [
       { id: "gen2", label: "GENERATOR-2", status: "ONLINE", type: "normal" },
       { id: "transA", label: "TRANSFORMER-A", status: "138kV", type: "normal" },
       { id: "transB", label: "TRANSFORMER-B", status: "345kV", type: "normal" },
+      { id: "substation1", label: "SUBSTATION-1", status: "ACTIVE", type: "normal" },
+      { id: "substation2", label: "SUBSTATION-2", status: "ACTIVE", type: "normal" },
+      { id: "protection_system", label: "PROTECTION", status: "ARMED", type: "normal" },
       { id: "load", label: "GRID LOAD", status: "85% CAP", type: "normal" },
     ],
     attackScenarios: [
