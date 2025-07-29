@@ -32,7 +32,8 @@ const io = socketIo(server, {
       "http://localhost:8080",
       "https://sudowinics.netlify.app",
       "https://*.netlify.app",
-      process.env.CORS_ORIGIN
+      process.env.CORS_ORIGIN,
+      "https://hackskyics.onrender.com"
     ].filter(Boolean),
     methods: ["GET", "POST"]
   }
@@ -57,7 +58,8 @@ app.use(cors({
     "http://localhost:8080",
     "https://sudowinics.netlify.app",
     "https://*.netlify.app",
-    process.env.CORS_ORIGIN
+    process.env.CORS_ORIGIN,
+    "https://hackskyics.onrender.com"
   ].filter(Boolean),
   credentials: true
 }));
