@@ -6,10 +6,10 @@ import { Switch } from './ui/switch';
 import { Label } from './ui/label';
 import { AlertTriangle, Activity, Zap, Shield, Play, Pause, Settings } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import io from 'socket.io-client';
+import { supabase } from '../integrations/supabase/client';
 
-// Backend URL configuration
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+// Supabase-based ML Anomaly Detection
+// No need for complex backend setup!
 
 interface SensorData {
   timestamp: string;

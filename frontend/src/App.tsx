@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Index from './pages/Index';
 import Admin from './pages/Admin';
-import AnomalyDetection from './components/AnomalyDetection';
+import SupabaseAnomalyDetection from './components/SupabaseAnomalyDetection';
 import NotFound from './pages/NotFound';
 
 function App() {
@@ -10,7 +10,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/admin" element={<Admin />} />
-        <Route path="/anomaly" element={<AnomalyDetection />} />
+                    <Route path="/anomaly" element={<SupabaseAnomalyDetection />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>

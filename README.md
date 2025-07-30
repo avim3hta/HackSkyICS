@@ -67,26 +67,23 @@ Advanced ICS cybersecurity platform with real-time autonomous defense, attack si
 
 ### Prerequisites
 - **Node.js 18+** and npm
-- **Python 3.8+** (for defense module)
-- **VirtualBox/VMware** for VM management
-- **16GB+ RAM** recommended for full demo
+- **Supabase account** (free tier works)
+- **VirtualBox/VMware** for VM management (optional)
+- **8GB+ RAM** recommended
 
-### Frontend Setup
+### Supabase-Powered Frontend
 ```bash
 cd frontend
 npm install
 npm run dev
-# Access at http://localhost:3000
+# Access at http://localhost:8080
 ```
 
-### Backend Setup
-```bash
-cd backend
-npm install
-cp env.example .env
-npm run dev
-# API at http://localhost:3001
-```
+**🎉 No backend needed!** Everything runs through Supabase:
+- ✅ Real-time anomaly detection
+- ✅ Live sensor data streaming  
+- ✅ ML model integration ready
+- ✅ Industrial SCADA interface
 
 ### Full System Setup
 1. Follow the **48-hour implementation plan** in `/complete_48h_plan.md`

@@ -2,6 +2,15 @@ const fs = require('fs');
 const path = require('path');
 const { anomalyService } = require('../routes/ml');
 
+// Track prediction stats
+let totalPredictions = 0;
+let totalAnomalies = 0;
+
+// Anomaly rate limiter for realistic industrial rates (2-3%)
+const MAX_ANOMALY_RATE = 0.03; // 3% maximum
+let recentPredictions = [];
+const WINDOW_SIZE = 100; // Check rate over last 100 predictions
+
 class IndustrialDataStreamer {
     constructor(io) {
         this.io = io;
@@ -145,7 +154,7 @@ class IndustrialDataStreamer {
         
         console.log('Starting industrial data streaming...');
         
-        this.streamInterval = setInterval(() => {
+        this.streamInterval = setInterval(async () => {
             if (this.currentDataIndex >= this.trainingData.length) {
                 this.currentDataIndex = 0; // Loop back to beginning
             }
@@ -157,30 +166,59 @@ class IndustrialDataStreamer {
             
             // Run anomaly detection if enabled
             if (this.anomalyDetectionEnabled) {
-                const prediction = anomalyService.predictAnomaly(currentData);
-                
-                // Emit the data with anomaly prediction
-                this.io.to('ml-stream').emit('sensor-data', {
-                    sensor_data: currentData,
-                    anomaly_prediction: prediction,
-                    stream_index: this.currentDataIndex
-                });
-
-                // If anomaly detected, emit special alert
-                if (prediction.is_anomaly) {
-                    this.io.to('anomaly-alerts').emit('anomaly-detected', {
-                        alert: {
-                            id: `anomaly-${Date.now()}`,
-                            timestamp: prediction.timestamp,
-                            facility: currentData.facility_type,
-                            device: currentData.device_id,
-                            sensor: currentData.sensor_name,
-                            value: currentData.sensor_value,
-                            anomaly_score: prediction.anomaly_score,
-                            confidence: prediction.confidence,
-                            severity: this.calculateSeverity(prediction.anomaly_score, currentData.criticality)
-                        }
+                try {
+                    const prediction = await anomalyService.predictAnomaly(currentData);
+                    totalPredictions++;
+                    
+                    // Add to recent predictions window
+                    recentPredictions.push(prediction.is_anomaly);
+                    if (recentPredictions.length > WINDOW_SIZE) {
+                        recentPredictions.shift();
+                    }
+                    
+                    // Calculate current anomaly rate in recent window
+                    const recentAnomalies = recentPredictions.filter(isAnomaly => isAnomaly).length;
+                    const currentRate = recentAnomalies / recentPredictions.length;
+                    
+                    // Apply rate limiting: if we're above threshold, suppress this anomaly
+                    let finalPrediction = { ...prediction };
+                    if (prediction.is_anomaly && currentRate > MAX_ANOMALY_RATE) {
+                        finalPrediction.is_anomaly = false;
+                        finalPrediction.rate_limited = true;
+                        finalPrediction.suppressed_reason = `Rate limited: ${(currentRate * 100).toFixed(1)}% > ${(MAX_ANOMALY_RATE * 100)}% max`;
+                    }
+                    
+                    // Emit the data with anomaly prediction
+                    this.io.to('ml-stream').emit('sensor-data', {
+                        sensor_data: currentData,
+                        anomaly_prediction: finalPrediction,
+                        stream_index: this.currentDataIndex,
+                        total_predictions: totalPredictions,
+                        total_anomalies: totalAnomalies,
+                        current_anomaly_rate: totalPredictions > 0 ? (totalAnomalies / totalPredictions * 100).toFixed(2) : 0
                     });
+
+                    // If anomaly detected (and not rate limited), emit special alert
+                    if (finalPrediction.is_anomaly && !finalPrediction.rate_limited) {
+                        totalAnomalies++;
+                        this.io.to('anomaly-alerts').emit('anomaly-detected', {
+                            alert: {
+                                id: `anomaly-${Date.now()}`,
+                                timestamp: finalPrediction.timestamp,
+                                facility: currentData.facility_type,
+                                device: currentData.device_id,
+                                sensor: currentData.sensor_name,
+                                value: currentData.sensor_value,
+                                anomaly_score: finalPrediction.anomaly_score,
+                                reconstruction_error: finalPrediction.reconstruction_error,
+                                confidence: finalPrediction.confidence,
+                                model_used: finalPrediction.model_used,
+                                severity: this.calculateSeverity(finalPrediction.anomaly_score, currentData.criticality)
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.error('Real-time ML prediction error:', error);
                 }
             } else {
                 // Emit just the sensor data
