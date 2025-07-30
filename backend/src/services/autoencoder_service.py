@@ -130,24 +130,51 @@ class AutoencoderAnomalyService:
             # Calculate reconstruction error
             reconstruction_error = torch.mean((input_tensor - reconstruction) ** 2).item()
             
-            # Determine anomaly using statistical approach
-            # Use 95th percentile threshold for realistic anomaly rates (2-5%)
-            anomaly_threshold = 1.0  # Higher threshold for industrial realism
+            # Increased sensitivity - Use 85th percentile threshold for higher detection (8-15%)
+            anomaly_threshold = 0.6  # Lower threshold for increased sensitivity
             
-            # Additional check: only flag as anomaly if error is significantly high
-            # AND we want realistic industrial anomaly rates (1-3%)
-            base_threshold = 0.8
-            severity_multiplier = 1.2
+            # Increased sensitivity settings to cap error rate at 15%
+            # Lower base threshold means more anomalies detected
+            base_threshold = 0.4  # Much more sensitive base threshold
+            severity_multiplier = 1.1
             
-            # Dynamic threshold based on sensor criticality
+            # Dynamic threshold based on sensor criticality (all more sensitive)
             if 'critical' in str(sensor_data.get('criticality', '')).lower():
-                final_threshold = base_threshold * 0.8  # More sensitive for critical systems
+                final_threshold = base_threshold * 0.6  # Very sensitive for critical systems
             elif 'high' in str(sensor_data.get('criticality', '')).lower():
-                final_threshold = base_threshold * 1.0
+                final_threshold = base_threshold * 0.8  # High sensitivity
             else:
-                final_threshold = base_threshold * 1.2  # Less sensitive for non-critical
+                final_threshold = base_threshold * 1.0  # Standard increased sensitivity
             
             is_anomaly = reconstruction_error > final_threshold
+            
+            # Cap error rate at 15% - adjust threshold dynamically if too many anomalies
+            # Keep track of recent anomaly rate and adjust threshold if needed
+            if not hasattr(self, 'recent_predictions'):
+                self.recent_predictions = []
+                self.error_cap_threshold = final_threshold
+            
+            # Store recent prediction (keep last 100)
+            self.recent_predictions.append(is_anomaly)
+            if len(self.recent_predictions) > 100:
+                self.recent_predictions.pop(0)
+            
+            # Calculate current anomaly rate
+            if len(self.recent_predictions) >= 20:  # Need minimum samples
+                current_error_rate = sum(self.recent_predictions) / len(self.recent_predictions)
+                
+                # If error rate > 15%, increase threshold to reduce false positives
+                if current_error_rate > 0.15:
+                    self.error_cap_threshold = final_threshold * 1.1
+                    is_anomaly = reconstruction_error > self.error_cap_threshold
+                    final_threshold = self.error_cap_threshold
+                # If error rate < 10%, we can be more sensitive
+                elif current_error_rate < 0.10:
+                    self.error_cap_threshold = final_threshold * 0.95
+                    is_anomaly = reconstruction_error > self.error_cap_threshold
+                    final_threshold = self.error_cap_threshold
+            else:
+                current_error_rate = 0.0
             
             # Calculate confidence based on how far above threshold
             if is_anomaly:
@@ -162,7 +189,10 @@ class AutoencoderAnomalyService:
                 'confidence': float(confidence),
                 'threshold': final_threshold,
                 'base_threshold': base_threshold,
-                'model_type': 'autoencoder'
+                'current_error_rate': float(current_error_rate) if len(self.recent_predictions) >= 20 else 0.0,
+                'error_rate_capped': current_error_rate > 0.15 if len(self.recent_predictions) >= 20 else False,
+                'model_type': 'autoencoder_enhanced',
+                'sensitivity_level': 'high'
             }
             
         except Exception as e:
@@ -171,7 +201,14 @@ class AutoencoderAnomalyService:
                 'anomaly_score': 0.0,
                 'reconstruction_error': 0.0,
                 'confidence': 0.0,
-                'error': str(e)
+                'current_error_rate': 0.0,
+                'error_rate_capped': False,
+                'threshold': 0.0,
+                'base_threshold': 0.0,
+                'model_type': 'autoencoder_error',
+                'sensitivity_level': 'high',
+                'error': str(e),
+                'error_details': f'Model prediction failed: {type(e).__name__}: {str(e)}'
             }
 
 def main():

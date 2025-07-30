@@ -51,9 +51,15 @@ class AnomalyDetectionService {
                                 is_anomaly: result.is_anomaly || false,
                                 confidence: result.confidence || 0,
                                 reconstruction_error: result.reconstruction_error || 0,
-                                model_used: 'real_autoencoder',
+                                current_error_rate: result.current_error_rate || 0,
+                                error_rate_capped: result.error_rate_capped || false,
+                                threshold: result.threshold || 0,
+                                base_threshold: result.base_threshold || 0,
+                                sensitivity_level: result.sensitivity_level || 'high',
+                                model_used: result.model_type || 'real_autoencoder',
                                 facility_type: sensorData.facility_type || 'unknown',
-                                device_id: sensorData.device_id || 'unknown'
+                                device_id: sensorData.device_id || 'unknown',
+                                error_details: result.error_details || null
                             };
 
                             // Store in history (keep last 1000 predictions)
@@ -68,13 +74,19 @@ class AnomalyDetectionService {
                             const mockPrediction = {
                                 timestamp: new Date().toISOString(),
                                 sensor_data: sensorData,
-                                anomaly_score: Math.random(),
-                                is_anomaly: Math.random() > 0.8,
+                                anomaly_score: Math.random() * 0.8, // Keep mock scores lower
+                                is_anomaly: Math.random() > 0.85, // 15% anomaly rate max
                                 confidence: 0.5,
+                                current_error_rate: 0.12, // Mock 12% error rate
+                                error_rate_capped: false,
+                                threshold: 0.4,
+                                base_threshold: 0.4,
+                                sensitivity_level: 'high',
                                 model_used: 'fallback_mock',
                                 facility_type: sensorData.facility_type || 'unknown',
                                 device_id: sensorData.device_id || 'unknown',
-                                error: 'Python parsing failed'
+                                error: 'Python parsing failed',
+                                error_details: `Model prediction failed: ${parseError.message}`
                             };
                             resolve(mockPrediction);
                         }

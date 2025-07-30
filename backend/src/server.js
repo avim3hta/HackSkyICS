@@ -4,7 +4,10 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const dotenv = require('dotenv');
 const http = require('http');
+const https = require('https');
 const socketIo = require('socket.io');
+const fs = require('fs');
+const path = require('path');
 
 // Load environment variables
 dotenv.config();
@@ -19,12 +22,39 @@ const { router: mlRoutes, anomalyService } = require('./routes/ml');
 const { loggerMiddleware } = require('./middleware/logger');
 const { errorHandler } = require('./middleware/errorHandler');
 
+// Import security components
+const { 
+    authenticateToken, 
+    requirePermission, 
+    requireFacilityAccess, 
+    createRateLimiter 
+} = require('./middleware/security');
+const { EncryptionService } = require('./security/encryption');
+const { ThreatDetectionEngine } = require('./security/threat-detection');
+const { IncidentResponseSystem } = require('./security/incident-response');
+
 // Import simulation engine
 const { SimulationEngine } = require('./simulation/engine');
 const { IndustrialDataStreamer } = require('./services/dataStreamer');
 
 const app = express();
-const server = http.createServer(app);
+
+// Initialize security services
+console.log('🔐 Initializing Security Components...');
+const encryptionService = new EncryptionService();
+const threatDetectionEngine = new ThreatDetectionEngine();
+const incidentResponseSystem = new IncidentResponseSystem(threatDetectionEngine);
+
+// Create HTTPS server with TLS certificates
+let server;
+try {
+    const tlsConfig = encryptionService.getTLSConfig();
+    server = https.createServer(tlsConfig, app);
+    console.log('✅ HTTPS Server initialized with TLS certificates');
+} catch (error) {
+    console.warn('⚠️  TLS certificates not found, falling back to HTTP');
+    server = http.createServer(app);
+}
 const io = socketIo(server, {
   cors: {
     origin: [

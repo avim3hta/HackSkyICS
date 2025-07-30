@@ -54,8 +54,11 @@ interface ModelStats {
   total_predictions: number;
   detected_anomalies: number;
   current_anomaly_rate: string;
+  current_error_rate?: number;
+  error_rate_capped?: boolean;
   model_status: string;
   last_prediction?: string;
+  sensitivity_level?: string;
 }
 
 interface StreamingStats {
@@ -298,7 +301,7 @@ const AnomalyDetection: React.FC = () => {
 
       {/* Model Performance Stats */}
       {modelStats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -343,6 +346,23 @@ const AnomalyDetection: React.FC = () => {
                   <p className="text-2xl font-bold">{modelStats.current_anomaly_rate}%</p>
                 </div>
                 <AlertTriangle className="w-8 h-8 text-red-500" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Error Rate</p>
+                  <p className="text-2xl font-bold text-orange-500">
+                    {modelStats.current_error_rate ? (modelStats.current_error_rate * 100).toFixed(1) : '0.0'}%
+                  </p>
+                  {modelStats.error_rate_capped && (
+                    <p className="text-xs text-orange-600 mt-1">Capped at 15%</p>
+                  )}
+                </div>
+                <Settings className="w-8 h-8 text-orange-500" />
               </div>
             </CardContent>
           </Card>
@@ -402,6 +422,24 @@ const AnomalyDetection: React.FC = () => {
         </Card>
       </div>
 
+      {/* Error Rate Notification */}
+      {modelStats?.error_rate_capped && (
+        <Card className="border-orange-200 bg-orange-50">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-3">
+              <AlertTriangle className="w-5 h-5 text-orange-500" />
+              <div>
+                <p className="font-medium text-orange-800">Error Rate Capped</p>
+                <p className="text-sm text-orange-700">
+                  Anomaly detection sensitivity has been automatically adjusted to maintain error rate below 15%.
+                  Current sensitivity: {modelStats.sensitivity_level || 'high'}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Recent Anomaly Alerts */}
       <Card>
         <CardHeader>
@@ -409,6 +447,11 @@ const AnomalyDetection: React.FC = () => {
             <AlertTriangle className="w-5 h-5 text-red-500" />
             <span>Recent Anomaly Alerts</span>
             <Badge variant="secondary">{anomalyAlerts.length}</Badge>
+            {modelStats?.current_error_rate && (
+              <Badge variant="outline" className="text-orange-600">
+                Error Rate: {(modelStats.current_error_rate * 100).toFixed(1)}%
+              </Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
