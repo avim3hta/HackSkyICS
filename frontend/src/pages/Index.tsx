@@ -34,7 +34,13 @@ const Index = () => {
               <span className="font-medium">THREAT LEVEL: LOW</span>
             </div>
             <a 
-              href="/anomaly" 
+              href="/electrical-grid" 
+              className="px-3 py-1 bg-yellow-500/10 text-yellow-600 border border-yellow-500/20 rounded-md text-sm font-medium hover:bg-yellow-500/20 transition-colors"
+            >
+              ⚡ Electrical Grid
+            </a>
+            <a 
+              href="/ai-detection" 
               className="px-3 py-1 bg-blue-500/10 text-blue-600 border border-blue-500/20 rounded-md text-sm font-medium hover:bg-blue-500/20 transition-colors"
             >
               🤖 AI Detection

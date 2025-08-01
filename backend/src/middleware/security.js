@@ -405,6 +405,83 @@ const requireFacilityAccess = (req, res, next) => {
     next();
 };
 
+// =======================
+// FAILSAFE RECOVERY MIDDLEWARE
+// =======================
+
+let failsafeSystem = null;
+
+// Initialize failsafe system
+const initializeFailsafe = (failsafeInstance) => {
+    failsafeSystem = failsafeInstance;
+    console.log('🛡️ Failsafe middleware initialized');
+};
+
+// Failsafe IP restriction middleware
+const enforceFailsafeRestriction = (req, res, next) => {
+    if (!failsafeSystem) {
+        console.warn('⚠️ Failsafe system not initialized, allowing request');
+        return next();
+    }
+
+    // Get client IP (handle proxy headers)
+    const clientIP = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 
+                    req.headers['x-real-ip'] || 
+                    req.connection?.remoteAddress || 
+                    req.socket?.remoteAddress ||
+                    req.ip;
+
+    // Clean up IPv6 mapped IPv4 addresses
+    const cleanIP = clientIP?.replace(/^::ffff:/, '') || 'unknown';
+    
+    // Check if IP is allowed during failsafe mode
+    if (!failsafeSystem.isIPAllowed(cleanIP)) {
+        console.log(`🚫 FAILSAFE: Access denied from IP ${cleanIP}`);
+        console.log(`🔒 FAILSAFE: Only ${failsafeSystem.allowedIP} is permitted`);
+        
+        // Log the access attempt
+        const logData = {
+            timestamp: new Date().toISOString(),
+            clientIP: cleanIP,
+            userAgent: req.headers['user-agent'],
+            path: req.path,
+            method: req.method,
+            headers: req.headers
+        };
+        
+        failsafeSystem.emit('unauthorizedAccess', logData);
+        
+        return res.status(423).json({
+            error: 'System in failsafe recovery mode',
+            message: 'Access restricted to authorized recovery device only',
+            code: 'FAILSAFE_ACTIVE',
+            timestamp: new Date().toISOString(),
+            contactSupport: 'Access the system from the designated recovery device or contact system administrator'
+        });
+    }
+
+    // Add client IP to request for other middleware to use
+    req.clientIP = cleanIP;
+    next();
+};
+
+// Check if failsafe is active (informational middleware)
+const checkFailsafeStatus = (req, res, next) => {
+    if (failsafeSystem && failsafeSystem.isActive) {
+        req.failsafeActive = true;
+        req.failsafeInfo = {
+            isActive: true,
+            activationTime: failsafeSystem.activationTime,
+            activationReason: failsafeSystem.activationReason,
+            allowedIP: failsafeSystem.allowedIP
+        };
+    } else {
+        req.failsafeActive = false;
+        req.failsafeInfo = { isActive: false };
+    }
+    next();
+};
+
 module.exports = {
     AuthenticationService,
     AuthorizationService,
@@ -412,5 +489,8 @@ module.exports = {
     authenticateToken,
     requirePermission,
     requireFacilityAccess,
-    createRateLimiter
+    createRateLimiter,
+    initializeFailsafe,
+    enforceFailsafeRestriction,
+    checkFailsafeStatus
 };

@@ -7,9 +7,10 @@ import { Label } from './ui/label';
 import { AlertTriangle, Activity, Zap, Shield, Play, Pause, Settings } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { supabase } from '../integrations/supabase/client';
-
+import io from 'socket.io-client';
 // Supabase-based ML Anomaly Detection
 // No need for complex backend setup!
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001';
 
 interface SensorData {
   timestamp: string;

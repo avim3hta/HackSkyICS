@@ -14,6 +14,7 @@ class ThreatDetectionEngine extends EventEmitter {
         this.networkBaselines = new Map();
         this.deviceBaselines = new Map();
         this.securityRules = this.initializeSecurityRules();
+        this.failsafeSystem = null; // Will be injected later
         
         // Detection metrics
         this.metrics = {
@@ -25,6 +26,12 @@ class ThreatDetectionEngine extends EventEmitter {
 
         // Start monitoring
         this.startThreatDetection();
+    }
+
+    // Inject failsafe system reference
+    setFailsafeSystem(failsafeSystem) {
+        this.failsafeSystem = failsafeSystem;
+        console.log('🔗 Failsafe system linked to threat detection');
     }
 
     // Initialize security detection rules
@@ -76,6 +83,47 @@ class ThreatDetectionEngine extends EventEmitter {
                 conditions: {
                     certificateChanges: true,
                     unexpectedTlsHandshakes: true
+                }
+            },
+            
+            // Admin portal compromise detections
+            'admin_compromise': {
+                description: 'Admin portal compromise detected',
+                severity: 'CRITICAL',
+                conditions: {
+                    failedLoginThreshold: 5,
+                    adminSessionHijacking: true,
+                    privilegeEscalation: true,
+                    automaticFailsafe: true
+                }
+            },
+            'admin_brute_force': {
+                description: 'Brute force attack on admin account detected',
+                severity: 'CRITICAL',
+                conditions: {
+                    failedAttemptsPerMinute: 10,
+                    timeWindow: 60000,
+                    automaticFailsafe: true
+                }
+            },
+            'admin_session_anomaly': {
+                description: 'Anomalous admin session activity detected',
+                severity: 'HIGH',
+                conditions: {
+                    unusualLoginTime: true,
+                    multipleSimultaneousSessions: true,
+                    suspiciousIPAddress: true,
+                    automaticFailsafe: true
+                }
+            },
+            'admin_privilege_abuse': {
+                description: 'Admin privilege abuse detected',
+                severity: 'CRITICAL',
+                conditions: {
+                    massiveConfigChanges: true,
+                    unauthorizedUserCreation: true,
+                    systemConfigModification: true,
+                    automaticFailsafe: true
                 }
             },
             
@@ -533,6 +581,11 @@ class ThreatDetectionEngine extends EventEmitter {
             this.emit('criticalThreat', threat);
         }
 
+        // Check if this threat type should trigger failsafe automatically
+        if (this.shouldTriggerFailsafe(threat)) {
+            await this.triggerFailsafe(threat);
+        }
+
         console.log(`🚨 THREAT DETECTED: ${threat.type} (${threat.severity}) - ${threat.description}`);
         
         return threat;
@@ -567,6 +620,124 @@ class ThreatDetectionEngine extends EventEmitter {
     // Get threat metrics
     getMetrics() {
         return { ...this.metrics };
+    }
+
+    // Check if threat should trigger failsafe
+    shouldTriggerFailsafe(threat) {
+        const rule = this.securityRules[threat.type];
+        
+        // Check if the threat type has automatic failsafe enabled
+        if (rule?.conditions?.automaticFailsafe === true) {
+            return true;
+        }
+
+        // Additional admin compromise patterns
+        if (threat.type.includes('admin') || 
+            threat.description.toLowerCase().includes('admin portal') ||
+            threat.description.toLowerCase().includes('privilege') ||
+            threat.type === 'admin_compromise' ||
+            threat.type === 'admin_brute_force' ||
+            threat.type === 'admin_session_anomaly' ||
+            threat.type === 'admin_privilege_abuse') {
+            return true;
+        }
+
+        // Critical threats with multiple failed admin attempts
+        if (threat.severity === 'CRITICAL' && 
+            (threat.details?.failedAdminLogins > 3 || 
+             threat.details?.adminAccountTargeted === true)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    // Trigger failsafe recovery mode
+    async triggerFailsafe(threat) {
+        if (!this.failsafeSystem) {
+            console.warn('⚠️ Cannot trigger failsafe: System not initialized');
+            return;
+        }
+
+        console.log(`🚨 TRIGGERING FAILSAFE RECOVERY for threat: ${threat.type}`);
+        
+        try {
+            await this.failsafeSystem.activateFailsafeAuto({
+                type: threat.type,
+                severity: threat.severity,
+                description: threat.description,
+                details: threat.details,
+                timestamp: threat.timestamp,
+                threatId: threat.id
+            });
+            
+            // Update threat to indicate failsafe was triggered
+            threat.failsafeTriggered = true;
+            threat.failsafeTimestamp = new Date();
+            
+            console.log(`✅ Failsafe recovery activated for threat ${threat.id}`);
+        } catch (error) {
+            console.error('Failed to trigger failsafe recovery:', error);
+            
+            // Log the failure but don't throw - we still want the threat to be processed
+            threat.failsafeFailed = true;
+            threat.failsafeError = error.message;
+        }
+    }
+
+    // Enhanced admin compromise detection
+    async detectAdminCompromise(authEvents) {
+        const adminEvents = authEvents.filter(event => 
+            event.user?.role === 'admin' || 
+            event.user?.role === 'system_admin' ||
+            event.description?.toLowerCase().includes('admin')
+        );
+
+        for (const event of adminEvents) {
+            // Multiple admin login failures
+            if (event.type === 'login_failed' && event.consecutiveFailures >= 3) {
+                await this.createThreat('admin_brute_force', {
+                    userEmail: event.user?.email,
+                    failedAttempts: event.consecutiveFailures,
+                    sourceIP: event.sourceIP,
+                    timeWindow: event.timeWindow,
+                    adminAccountTargeted: true
+                });
+            }
+
+            // Admin session from suspicious location
+            if (event.type === 'admin_login_success' && event.suspiciousLocation) {
+                await this.createThreat('admin_session_anomaly', {
+                    userEmail: event.user?.email,
+                    sourceIP: event.sourceIP,
+                    location: event.location,
+                    previousLocations: event.previousLocations,
+                    suspiciousLocation: true
+                });
+            }
+
+            // Admin privilege escalation attempts
+            if (event.type === 'privilege_escalation' && event.targetRole === 'admin') {
+                await this.createThreat('admin_privilege_abuse', {
+                    userEmail: event.user?.email,
+                    targetRole: event.targetRole,
+                    sourceIP: event.sourceIP,
+                    unauthorizedEscalation: true
+                });
+            }
+
+            // Mass configuration changes by admin
+            if (event.type === 'config_change' && 
+                event.user?.role === 'admin' && 
+                event.changesCount > 5) {
+                await this.createThreat('admin_privilege_abuse', {
+                    userEmail: event.user?.email,
+                    changesCount: event.changesCount,
+                    configTypes: event.configTypes,
+                    massiveConfigChanges: true
+                });
+            }
+        }
     }
 
     // Simulate getting network traffic data

@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { plantConfigs } from "@/data/plantConfigs";
+import FailsafeControls from "@/components/FailsafeControls";
 
 interface SystemControl {
   id: string;
@@ -26,8 +27,17 @@ const Admin = () => {
   const [systemControls, setSystemControls] = useState<SystemControl[]>([]);
   const [loading, setLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [currentUserIP, setCurrentUserIP] = useState<string>('');
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Get current user IP
+  useEffect(() => {
+    fetch('https://api.ipify.org?format=json')
+      .then(response => response.json())
+      .then(data => setCurrentUserIP(data.ip))
+      .catch(error => console.error('Failed to get IP:', error));
+  }, []);
 
   // Initialize authentication state
   useEffect(() => {
@@ -794,6 +804,14 @@ const Admin = () => {
                 <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">99.8%</div>
                 <div className="text-sm text-blue-700 dark:text-blue-300">Protection Rate</div>
               </div>
+            </div>
+
+            {/* Failsafe Recovery System */}
+            <div className="mt-6">
+              <FailsafeControls 
+                isAdmin={isAdmin} 
+                currentUserIP={currentUserIP}
+              />
             </div>
           </CardContent>
         </Card>

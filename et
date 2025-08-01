@@ -1,0 +1,61 @@
+FIXED_ISSUES.md
+Interactive Purdue Model for Electrical Grids in TypeScript/AnimatedBackground.tsx
+Interactive Purdue Model for Electrical Grids in TypeScript/App.css
+Interactive Purdue Model for Electrical Grids in TypeScript/App.tsx
+Interactive Purdue Model for Electrical Grids in TypeScript/ConnectionFlowSVG.tsx
+Interactive Purdue Model for Electrical Grids in TypeScript/ControlPanel.tsx
+Interactive Purdue Model for Electrical Grids in TypeScript/GridComponentSVG.tsx
+Interactive Purdue Model for Electrical Grids in TypeScript/PurdueLevelLayer.tsx
+Interactive Purdue Model for Electrical Grids in TypeScript/PurdueModelDiagram.tsx
+Interactive Purdue Model for Electrical Grids in TypeScript/StatusPanel.tsx
+Interactive Purdue Model for Electrical Grids in TypeScript/SystemHealthDashboard.tsx
+Interactive Purdue Model for Electrical Grids in TypeScript/gridData.ts
+Interactive Purdue Model for Electrical Grids in TypeScript/index.html
+Interactive Purdue Model for Electrical Grids in TypeScript/index.ts
+Interactive Purdue Model for Electrical Grids in TypeScript/package.json
+Interactive Purdue Model for Electrical Grids in TypeScript/tsconfig.json
+Interactive Purdue Model for Electrical Grids in TypeScript/tsconfig.node.json
+Interactive Purdue Model for Electrical Grids in TypeScript/useRealTimeData.ts
+START_DEMO.md
+backend/src/middleware/security.js
+backend/src/routes/failsafe.js
+backend/src/security/failsafe-recovery.js
+backend/src/security/threat-detection.js
+backend/src/server.js
+build_and_run.bat
+frontend/public/favicon.svg
+frontend/src/App.tsx
+frontend/src/components/AnomalyDetection.tsx
+frontend/src/components/FailsafeControls.tsx
+frontend/src/components/OriginalPurdueModel.tsx
+frontend/src/pages/AIDetectionDashboard.tsx
+frontend/src/pages/Admin.tsx
+frontend/src/pages/ElectricalGridDashboard.tsx
+frontend/src/pages/Index.tsx
+frontend/vite.config.ts
+ml_training/DEMO_SETUP_GUIDE.md
+ml_training/RESULTS.md
+ml_training/api_server.py
+ml_training/attack_generator.py
+ml_training/attack_vm.py
+ml_training/data/electrical_grid_attacks.csv
+ml_training/data/normal_electrical_grid_1m.csv
+ml_training/data/normal_electrical_grid_5m.csv
+ml_training/data/normal_electrical_grid_900k.csv
+ml_training/deploy_model.py
+ml_training/evaluate_model.py
+ml_training/models/electrical_grid_autoencoder.pth
+ml_training/models/evaluation_results.json
+ml_training/models/feature_columns.pkl
+ml_training/models/feature_scaler.pkl
+ml_training/models/label_encoders.pkl
+ml_training/models/reconstruction_threshold.pkl
+ml_training/normal_grid_fabricator.py
+ml_training/production_server.py
+ml_training/reconstruction_autoencoder.py
+ml_training/run_api_server.py
+ml_training/run_reconstruction_training.sh
+ml_training/send_normal_data.py
+ml_training/start_ai_detection_system.py
+ml_training/vm_attack_executor.py
+ml_training/vm_attack_interface.py

@@ -1,0 +1,105 @@
+{
+  "normal_data": {
+    "accuracy": 0.9499,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1_score": 0.0,
+    "false_positive_rate": 0.0501,
+    "avg_reconstruction_error": 0.0014193893875926733,
+    "samples_tested": 10000
+  },
+  "attack_data": {
+    "accuracy": 0.976010101010101,
+    "precision": 1.0,
+    "recall": 0.976010101010101,
+    "f1_score": 0.9878594249201278,
+    "detection_rate": 0.976010101010101,
+    "avg_reconstruction_error": 67.48929595947266,
+    "samples_tested": 12672
+  },
+  "by_attack_type": {
+    "voltage_sag_attack": {
+      "detection_rate": 0.9848130841121495,
+      "avg_reconstruction_error": 61.28534698486328,
+      "count": 856
+    },
+    "voltage_swell_attack": {
+      "detection_rate": 0.9848130841121495,
+      "avg_reconstruction_error": 61.362796783447266,
+      "count": 856
+    },
+    "voltage_instability_attack": {
+      "detection_rate": 0.9789719626168224,
+      "avg_reconstruction_error": 61.31440734863281,
+      "count": 856
+    },
+    "zero_day_attack": {
+      "detection_rate": 0.9604743083003953,
+      "avg_reconstruction_error": 69.6364974975586,
+      "count": 1265
+    },
+    "under_frequency_attack": {
+      "detection_rate": 0.955026455026455,
+      "avg_reconstruction_error": 69.59417724609375,
+      "count": 378
+    },
+    "over_frequency_attack": {
+      "detection_rate": 0.955026455026455,
+      "avg_reconstruction_error": 69.59417724609375,
+      "count": 378
+    },
+    "frequency_oscillation_attack": {
+      "detection_rate": 0.955026455026455,
+      "avg_reconstruction_error": 69.59417724609375,
+      "count": 378
+    },
+    "stuxnet_style_attack": {
+      "detection_rate": 0.96,
+      "avg_reconstruction_error": 69.7836685180664,
+      "count": 2400
+    },
+    "power_overload_attack": {
+      "detection_rate": 1.0,
+      "avg_reconstruction_error": 68.57340240478516,
+      "count": 1217
+    },
+    "power_drop_attack": {
+      "detection_rate": 1.0,
+      "avg_reconstruction_error": 68.07269287109375,
+      "count": 1217
+    },
+    "power_spike_attack": {
+      "detection_rate": 1.0,
+      "avg_reconstruction_error": 68.8031234741211,
+      "count": 1217
+    },
+    "harmonic_distortion_attack": {
+      "detection_rate": 0.9734982332155477,
+      "avg_reconstruction_error": 67.08765411376953,
+      "count": 566
+    },
+    "overheating_attack": {
+      "detection_rate": 0.9558823529411765,
+      "avg_reconstruction_error": 69.1712875366211,
+      "count": 544
+    },
+    "thermal_shock_attack": {
+      "detection_rate": 0.9558823529411765,
+      "avg_reconstruction_error": 69.17120361328125,
+      "count": 544
+    }
+  },
+  "overall": {
+    "accuracy": 0.9644936485532816,
+    "precision": 0.961069236148885,
+    "recall": 0.976010101010101,
+    "f1_score": 0.9684820484710857,
+    "roc_auc": 0.9872264954229799,
+    "specificity": 0.9499,
+    "sensitivity": 0.976010101010101,
+    "true_positives": 12368,
+    "true_negatives": 9499,
+    "false_positives": 501,
+    "false_negatives": 304
+  }
+}

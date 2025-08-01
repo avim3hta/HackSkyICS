@@ -17,6 +17,7 @@ const { router: scadaRoutes, initializeEngine: initScadaEngine } = require('./ro
 const { router: securityRoutes, initializeEngine: initSecurityEngine } = require('./routes/security');
 const aiRoutes = require('./routes/ai');
 const { router: mlRoutes, anomalyService } = require('./routes/ml');
+const { router: failsafeRoutes, initializeFailsafeRoutes, setupFailsafeWebSocket } = require('./routes/failsafe');
 
 // Import middleware
 const { loggerMiddleware } = require('./middleware/logger');
@@ -27,11 +28,15 @@ const {
     authenticateToken, 
     requirePermission, 
     requireFacilityAccess, 
-    createRateLimiter 
+    createRateLimiter,
+    initializeFailsafe,
+    enforceFailsafeRestriction,
+    checkFailsafeStatus
 } = require('./middleware/security');
 const { EncryptionService } = require('./security/encryption');
 const { ThreatDetectionEngine } = require('./security/threat-detection');
 const { IncidentResponseSystem } = require('./security/incident-response');
+const { FailsafeRecoverySystem } = require('./security/failsafe-recovery');
 
 // Import simulation engine
 const { SimulationEngine } = require('./simulation/engine');
@@ -44,6 +49,7 @@ console.log('🔐 Initializing Security Components...');
 const encryptionService = new EncryptionService();
 const threatDetectionEngine = new ThreatDetectionEngine();
 const incidentResponseSystem = new IncidentResponseSystem(threatDetectionEngine);
+const failsafeRecoverySystem = new FailsafeRecoverySystem();
 
 // Create HTTPS server with TLS certificates
 let server;
@@ -80,6 +86,13 @@ app.locals.dataStreamer = dataStreamer;
 initScadaEngine(simulationEngine);
 initSecurityEngine(simulationEngine);
 
+// Initialize failsafe system
+initializeFailsafe(failsafeRecoverySystem);
+initializeFailsafeRoutes(failsafeRecoverySystem);
+
+// Link failsafe system to threat detection for automatic triggering
+threatDetectionEngine.setFailsafeSystem(failsafeRecoverySystem);
+
 // Security middleware
 app.use(helmet());
 app.use(cors({
@@ -93,6 +106,9 @@ app.use(cors({
   ].filter(Boolean),
   credentials: true
 }));
+
+// Apply failsafe restriction middleware EARLY in the stack
+app.use(enforceFailsafeRestriction);
 
 // Rate limiting
 const limiter = rateLimit({
@@ -148,6 +164,10 @@ app.use('/api/scada', scadaRoutes);
 app.use('/api/security', securityRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/ml', mlRoutes);
+app.use('/api/failsafe', failsafeRoutes);
+
+// Setup failsafe WebSocket events
+setupFailsafeWebSocket(io);
 
 // WebSocket connection handling
 io.on('connection', (socket) => {
@@ -168,6 +188,13 @@ io.on('connection', (socket) => {
   
   socket.on('join-anomaly-alerts', () => {
     socket.join('anomaly-alerts');
+  });
+  
+  socket.on('join-failsafe', () => {
+    socket.join('failsafe-alerts');
+    // Send current failsafe status to new client
+    const status = failsafeRecoverySystem.getStatus();
+    socket.emit('failsafe:status', status);
   });
   
   socket.on('disconnect', () => {
@@ -197,6 +224,7 @@ server.listen(PORT, () => {
   console.log(`📊 SCADA API: http://localhost:${PORT}/api/scada`);
   console.log(`🛡️ Security API: http://localhost:${PORT}/api/security`);
   console.log(`🤖 AI API: http://localhost:${PORT}/api/ai`);
+  console.log(`🆘 Failsafe API: http://localhost:${PORT}/api/failsafe`);
   console.log(`🔌 WebSocket: ws://localhost:${PORT}`);
 });
 
